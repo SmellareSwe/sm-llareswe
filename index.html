@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>SmällareSweden</title>
+
+<style>
+body{
+margin:0;padding:40px;
+background:url("vägg.png") center/cover fixed;
+font-family:Arial,sans-serif;color:white}
+
+/* FIXED BANNERS */
+.brapris{position:fixed;top:80px;right:130px;width:360px;z-index:10000}
+.kampanj{position:fixed;top:80px;left:80px;width:450px;z-index:10000}
+
+/* RAM */
+.frame-left,.frame-right{
+position:fixed;top:0;width:35px;height:100%;
+background:url("side.png") repeat-y;background-size:35px auto;
+z-index:9999}
+.frame-left{left:0}.frame-right{right:0}
+
+/* SIDEBANNERS */
+/* SIDEBANNERS – TVÅ STYCKEN, LITE MER MOT MITTEN */
+.side-banner{
+    position: fixed;
+    top: 55%;
+    transform: translateY(-50%);
+    width: 180px;
+    z-index: 9000;
+
+    /* RÖD, TYDLIG MEN SNYGG GLOW */
+    filter:
+        drop-shadow(0 0 8px rgba(255,60,60,0.7))
+        drop-shadow(0 0 18px rgba(255,0,0,0.6))
+        drop-shadow(0 0 28px rgba(255,0,0,0.4));
+}
+
+.side-banner.left{
+    left: 95px;   /* flyttad lite mer mot mitten */
+}
+
+.side-banner.right{
+    right: 95px;  /* flyttad lite mer mot mitten */
+}
+
+
+
+
+
+
+
+
+/* TOP BANNER */
+/* ===== BANNER ===== */
+.banner {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.banner img {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    border-radius: 12px;
+
+    /* 🔴 SVAG RÖD GLOW */
+    box-shadow:
+        0 0 10px rgba(255, 0, 0, 0.35),
+        0 0 22px rgba(255, 0, 0, 0.25),
+        0 0 35px rgba(255, 0, 0, 0.15);
+}
+
+
+/* PRODUKTER */
+.product-grid{
+display:grid;grid-template-columns:repeat(2,1fr);
+gap:45px;max-width:780px;margin:auto}
+
+.product{text-align:center;cursor:pointer}
+.product img{max-width:300px;width:100%;border-radius:10px;transition:.3s}
+.product img:hover{transform:scale(1.05)}
+.product p{font-size:18px;margin-top:12px}
+
+/* MODAL */
+.modal{
+display:none;position:fixed;inset:0;
+background:rgba(0,0,0,.85);
+z-index:20000;overflow:auto}
+.modal-content{
+background:#111;max-width:460px;
+margin:5% auto;padding:20px;border-radius:12px}
+.close{float:right;font-size:26px;cursor:pointer}
+
+/* BUTTONS */
+button{
+width:100%;padding:12px;margin:8px 0;
+font-size:16px;border:none;border-radius:6px;cursor:pointer}
+.buy{background:red;color:white}
+.cart{background:#444;color:white}
+.pay{background:green;color:white}
+
+/* FORM */
+input{
+width:100%;padding:10px;margin:6px 0;
+border-radius:5px;border:none;font-size:15px}
+
+/* VIT GLOW RUNT PRODUKTER – PC */
+.product img{
+    box-shadow: 0 0 18px rgba(255,255,255,0.65);
+}
+
+/* starkare glow vid hover */
+.product img:hover{
+    box-shadow: 0 0 30px rgba(255,255,255,0.95);
+}
+
+</style>
+</head>
+
+<body>
+
+<img src="brapris.png" class="brapris">
+<img src="kampanj.png" class="kampanj">
+
+<div class="frame-left"></div>
+<div class="frame-right"></div>
+
+<img src="bannerside.png" class="side-banner left">
+<img src="bannerside.png" class="side-banner right">
+
+<div class="banner">
+<img src="banner.png">
+</div>
+
+<div class="product-grid" id="grid"></div>
+
+<!-- PRODUKT MODAL -->
+<div id="productModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeProduct()">×</span>
+<img id="pImg" style="max-width:260px;width:100%;border-radius:10px">
+<h2 id="pName"></h2>
+<p id="pPrice"></p>
+<p>Frakt: 29 kr</p>
+<button class="buy" onclick="openCheckout()">Köp nu</button>
+<button class="cart">Lägg i varukorg</button>
+</div>
+</div>
+
+<!-- CHECKOUT -->
+<div id="checkoutModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeCheckout()">×</span>
+
+<h2>Slutför köp</h2>
+
+<input placeholder="För- och efternamn">
+<input placeholder="Adress">
+<input placeholder="Postnummer">
+<input placeholder="Stad">
+
+<input placeholder="Kortnummer">
+<input placeholder="MM / ÅÅ">
+<input placeholder="CVC">
+
+<p id="total"></p>
+
+<button class="pay" onclick="finish()">Slutför köp</button>
+</div>
+</div>
+
+<script>
+const shipping=29;
+let currentPrice=0;
+
+const products=[
+["p1","Thunder Crack",229],["p2","Silver Shock",49],["p3","Night Blaster",99],
+["p4","Red Devil Smällare",199],["p5","Sky Fury",79],["p6","Blue Thunder",199],
+["p7","Atomic Crackers",150],["p8","Inferno Pops",150],["p9","Storm King",89],
+["p10","Neon Blast",49],["p11","Midnight Bang",99],["p12","Ragnarök",69],
+["p13","Galaxy Bombtårta",49],["p14","Thunder Cake",15],["p15","Skyfall Extreme",349],
+["p16","Golden Vortex",329],["p17","Crimson Storm",49],["p18","Nightfall Cake",289],
+["p19","Sky Annihilator",39],["p20","Nova Burst",59],["p21","Iron Thunder",99],
+["p22","Cosmic Rage",99],["p23","Blackout Bombtårta",199],["p24","Sky Dominator",89],
+["p25","Phantom Blast",89],["p26","Voltage Crackers",155],["p27","Firestorm XL",149],
+["p28","Ultimate Chaos",59],["p29","Mini Mayhem",29],["p30","Flash Strike",19],
+["p31","Crackling Fury",25],["p32","Shadow Blast",59],["p33","Neon Crack",19],
+["p34","Fire Pulse",49],["p35","Thunder Mini",59],["p36","Dark Nova",89],
+["p37","Crimson Flash",39],["p38","Vortex Crackers",199],["p39","Sky Ripper",19],
+["p40","Inferno King",49],["p41","Final Explosion",89]
+];
+
+grid.innerHTML = products.map(p=>`
+<div class="product" onclick="openProduct('${p[0]}','${p[1]}',${p[2]})">
+<img src="images/${p[0]}.png">
+<p>${p[1]}<br>${p[2]} kr</p>
+</div>`).join("");
+
+function openProduct(id,name,price){
+currentPrice=price;
+pImg.src="images/"+id+".png";
+pName.innerText=name;
+pPrice.innerText=price+" kr";
+productModal.style.display="block";
+}
+function closeProduct(){productModal.style.display="none"}
+function openCheckout(){
+productModal.style.display="none";
+total.innerText="Totalt: "+(currentPrice+shipping)+" kr";
+checkoutModal.style.display="block";
+}
+function closeCheckout(){checkoutModal.style.display="none"}
+function finish(){
+alert("Tack för ditt köp!");
+checkoutModal.style.display="none";
+}
+</script>
+
+</body>
+</html>
